@@ -1,0 +1,75 @@
+http:
+  timeout: 3s
+  domain: 'http://127.0.0.1:12345'
+  headers:
+    - name: Accept
+      value: "*/*"
+    - name: X-Liuyi-App-Key
+      value: 88937d1372b277f8080a3accb9d6174b
+
+
+socket:
+  timeout: 10s
+  ip: 127.0.0.1
+  port: 34352
+
+traces:
+  - name: "1 登录注册"
+    desc: ""
+    spans:
+      - name: "发送短信验证码"
+        desc: ""
+        kind: 1
+        http_entry:
+          url: /liuyi/push_code
+          method: GET
+          params:
+            - name: phone
+              value: 110
+          state: "#code == 200"
+          fail: break
+
+      - name: "显示验证码"
+        desc: ""
+        kind: 1
+        http_entry:
+          url: /liuyi/show_code
+          method: GET
+          params:
+            - name: phone
+              value: 110
+          state: "#code == 200"
+          success:
+            - "@sms = #data"
+          fail: break
+
+      - name: "登录"
+        desc: ""
+        kind: 1
+        http_entry:
+          url: /liuyi/login
+          method: GET
+          params:
+            - name: phone
+              value: 110
+            - name: code
+              value: "@sms"
+          state: "#code == 200"
+          success:
+            - "@token = #data"
+          fail: break
+
+      - name: "查询"
+        desc: ""
+        kind: 1
+        http_entry:
+          url: /liuyi/foo
+          method: POST
+          headers:
+            - name: Authorization
+              value: "bearer @token"
+          params:
+            - name: phone
+              value: 110
+          state: "#code == 200"
+          fail: break
